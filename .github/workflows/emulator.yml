@@ -36,6 +36,8 @@ jobs:
           EMU_PREVIEW: "0"
       - name: Check it boots
         run: node web/emu/emu_test.mjs build/emu/${{ env.APP }}.wasm
+        env:
+          EMU_SELF_SOUND: "1"                  # the body beats by itself: no silence checks
       - name: Assemble the site
         run: |
           mkdir -p _site

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* TAI: one short sample, four coupled organs that keep it alive and will not do as they are told. This is the first slice: the
  * body (tai/organs.h) and its bedside monitor. No DSP is wired to the body yet: the only sound is a short tone under the keys,
- * so a hand on the body is heard. docs/SPEC.md says what each part is meant to become.
+ * so a hand on the body is heard. T1 PULSE (tai/pulse.h) is wired: a built-in sample, started on each heartbeat. docs/SPEC.md says what each part is meant to become.
  *
  *   KNOB 1..4        PRESSURE, VENT, TENSION, STASIS: the four organs (0..127, 2 a detent, from 64 at power-on)
  *   SELECT           COMPLIANCE: stiff .. soft tissue           (these three are kept in flash)
@@ -23,6 +23,7 @@
 #include "platform.c"
 #include "quad.h"
 #include "tai/organs.h"
+#include "tai/pulse.h"
 
 /* ---- the sound: a tone under each key (until the DSP is wired: docs/SPEC.md) */
 #define NV 4u
@@ -34,18 +35,14 @@ static struct {
     uint8_t note;
 } voice[NV];
 
-static int32_t sine(uint32_t ph)                /* (niwa.c's) */
-{
-    int32_t x = (int32_t)ph >> 16, ax = x < 0 ? -x : x, y, ay;
-    y = (x * (32768 - ax)) >> 13;
-    ay = y < 0 ? -y : y;
-    y += ((((y * ay) >> 15) - y) * 7373) >> 15;
-    return y > 32767 ? 32767 : y < -32767 ? -32767 : y;
-}
+static pul_voice pulse;
+static volatile uint32_t snap_beats;            /* the body's beat count and attack, copied after each step (1 writer: the main loop) */
+static volatile int32_t snap_attack;
 
 static void app_audio(int32_t *out, uint32_t n)
 {
     uint32_t v, i;
+    pul_run(&pulse, out, n, snap_beats, snap_attack);
     for (v = 0; v < NV; v++) {
         uint32_t ph = voice[v].ph, step = voice[v].inc;
         int32_t amp = voice[v].amp, g = voice[v].gate;
@@ -56,7 +53,7 @@ static void app_audio(int32_t *out, uint32_t n)
             if (amp < g) { amp += 48; if (amp > g) amp = g; }
             else if (amp > g) { amp -= 12; if (amp < g) amp = g; }
             ph += step;
-            s = (sine(ph) * amp) >> 15;
+            s = (pul_sine(ph) * amp) >> 15;
             out[2u * i] += s;
             out[2u * i + 1u] += s;
         }
@@ -274,6 +271,9 @@ static void app_init(void)
     settings_load(&set, sizeof set);
     if (set.comp > 127u || set.metab > 127u || set.elyte > 127u || set.sweep > 2u) { set.comp = set.metab = set.elyte = 64; set.sweep = 1; }
     org_init(&body, 0x7A1u);
+    pul_make(&pulse);
+    snap_beats = body.beats;
+    pulse.seen = body.beats;
     for (i = 0; i < 4u; i++) { last_y[i] = (int32_t)(LANE * i + 25u); lo[i] = 1 << 20; hi[i] = -(1 << 20); }
     palette_set(UI_DEFAULT_PALETTE);
     lcd_fill(0, 0, 240, 240, BLACK);
@@ -324,6 +324,8 @@ static void app_step(void)
     while ((int32_t)(fm1_ms - last_ms) >= (int32_t)ORG_DT_MS) {          /* the body keeps its own time */
         last_ms += ORG_DT_MS;
         org_step(&body);
+        snap_attack = body.attack;
+        snap_beats = body.beats;
         sample();
         if ((int32_t)(last_ms - col_ms) >= SWEEP_MS[set.sweep]) { col_ms = last_ms; column(); }
     }
