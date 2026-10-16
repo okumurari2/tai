@@ -15,5 +15,5 @@ export default {
   ],
   theme: { bg: "#7f8a86", body: "#121615", tray: "#0b0e0d", part: "#1f2624", edge: "#2f3a37", label: "#d3e0db", bezel: "#070908",
            keyface: "#0a0d0c", "btn-off": "#2b3330", lit: "#c9f5d8", "lit-ink": "#10201a", "slit-off": "#2c3532", "slit-lit": "#dff8e8" },
-  credits: 'TAI, built on niwa · <a href="https://github.com/okumurari2/niwa/tree/tai">source</a> (GPL-3.0)',
+  credits: 'TAI, built on niwa · <a href="https://github.com/okumurari2/tai">source</a> (GPL-3.0)',
 };

@@ -1,10 +1,10 @@
 name: Emulator (GitHub Pages)
 
-# The firmware in a browser (web/emu, docs/EMULATOR.md), published on every push to tai (TAI's working branch). One-time setting: the repository's
+# The firmware in a browser (web/emu, docs/EMULATOR.md), published on every push to main. One-time setting: the repository's
 # Settings > Pages > Source = "GitHub Actions". A firmware built on niwa sets APP (its firmware/src/APP.c, which needs APP_STEPPED).
 on:
   push:
-    branches: [tai]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
