@@ -11,7 +11,7 @@ python3 -m http.server -d build/emu          then open http://localhost:8000/
 ```
 
 Published on GitHub Pages by `.github/workflows/emulator.yml` (every push to main; set Settings > Pages > Source to "GitHub Actions"
-once). It builds with `APP` (the workflow's `env`), runs `emu_test.mjs` (a failing check stops the deploy), and uploads `build/emu`.
+once). It builds with `APP` (the workflow's `env`), runs `emu_test.mjs` (a failing check stops the deploy; a firmware that sounds by itself sets `EMU_SELF_SOUND=1` in the workflow's `env`, which skips the two silence checks, "silent at rest" and "key up: silent"), and uploads `build/emu`.
 
 ## The parts
 

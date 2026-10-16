@@ -11,6 +11,7 @@ import { storeAreas, storeSectors, restoreSectors } from "./worklet.js";
 
 const bytes = fs.readFileSync(process.argv[2] || "build/emu/niwa.wasm");
 const B = { OCTDN: 12, OCTUP: 13 };               // the page's labels (index.html B)
+const SELF = !!process.env.EMU_SELF_SOUND;     // a firmware that sounds by itself (a body that keeps beating): the two silence checks are skipped
 const EN = { SELECT: 0, PRESETS: 2 };
 let fails = 0;
 const check = (what, ok) => { console.log(`emu: ${what.padEnd(78)} ${ok ? "ok" : "FAIL"}`); if (!ok) fails++; };
@@ -58,7 +59,7 @@ check("web_store_areas: the settings sector, 4 KiB aligned", a.areas.length >= 1
 a.render(300);
 const idle = a.screen();
 check(`boots: the screen is drawn (${colours(idle)} colours), the draw count moved`, colours(idle) > 3 && a.ex.web_screen_draws() > 0);
-check("silent at rest", a.peak === 0);
+check("silent at rest" + (SELF ? " (skipped: EMU_SELF_SOUND)" : ""), SELF || a.peak === 0);
 check("the clock follows the audio: 300 ms rendered, web_now_ms within a block of it", Math.abs(a.ex.web_now_ms() - 300) <= 6);
 
 // ---- a key sounds and lights its LED, then the sound dies
@@ -68,7 +69,7 @@ check(`a key: it sounds (peak ${a.peak.toFixed(3)}), its LED is lit`, a.peak > 0
 a.ex.web_keys(0);
 a.render(1500);
 a.render(100);
-check("the key up: silent again, the LED dark", a.peak < 0.0005 && a.ex.web_lit_keys() === 0);
+check("the key up: silent again, the LED dark" + (SELF ? " (sound skipped)" : ""), (SELF || a.peak < 0.0005) && a.ex.web_lit_keys() === 0);
 
 // ---- MIDI in sounds; MASTER scales it
 a.render(100);
