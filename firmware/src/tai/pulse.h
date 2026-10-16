@@ -75,7 +75,7 @@ static void pul_run(pul_voice *p, int32_t *out, uint32_t n, uint32_t beats, int3
     env = p->env;
     attack = q15_clamp(attack);
     rise = 32767 / (2000 - ((attack * 1950) >> 15));                    /* 2000 frames (45 ms) .. 50 frames (1 ms) to full */
-    gain = 4096 + ((attack * 3 * 4096) >> 15) * 4;                      /* x1 .. x4 (Q12): the drive */
+    gain = 4096 + ((attack * 3 * 4096) >> 15);                          /* x1 .. x4 (Q12): the drive */
     for (i = 0; i < n && pos < PUL_LEN; i++, pos++) {
         int32_t s = pul_soft((p->buf[pos] * gain) >> 12);
         env += rise;
